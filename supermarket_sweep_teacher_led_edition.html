@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Sweep - Teacher Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Light green supermarket vibe */
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .hide {
+            display: none !important;
+        }
+
+        /* Animations */
+        @keyframes pulse-border {
+            0% { border-color: #3b82f6; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            50% { border-color: #60a5fa; box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { border-color: #3b82f6; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .active-input {
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        /* Custom Drag/Drop slots styling */
+        .word-bank-btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .word-bank-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .word-bank-btn:active {
+            transform: translateY(0);
+        }
+
+        .drop-zone {
+            min-height: 40px;
+            min-width: 80px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.5rem;
+            margin: 0 0.25rem;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.filled {
+            border-style: solid;
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        /* Confetti effect */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            z-index: 100;
+        }
+
+        /* Layout structural classes */
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-w: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Screen 1: Role Selection -->
+    <div id="role-selection" class="app-container items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full animate-slide-in">
+            <h1 class="text-4xl font-extrabold text-green-600 mb-2">Supermarket Sweep</h1>
+            <p class="text-gray-600 mb-8 font-medium">Grammar - Comparatives & Superlatives</p>
+            
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Select Your Role</h2>
+            
+            <div class="space-y-4">
+                <button onclick="app.selectRole('teacher')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition shadow-lg">
+                    👩‍🏫 Teacher Dashboard
+                </button>
+                <div class="relative py-4">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">OR</span>
+                    </div>
+                </div>
+                <button onclick="app.selectRole('student')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl text-xl transition shadow-lg">
+                    🧑‍🎓 Student Pad
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 1.5: Teacher Setup -->
+    <div id="teacher-setup" class="app-container items-center justify-center hide min-h-screen">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full animate-slide-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Class Setup</h2>
+            <div class="mb-4 text-left">
+                <label for="class-name-input" class="block text-sm font-medium text-gray-700 mb-2">Class Name</label>
+                <input type="text" id="class-name-input" value="Class 4F" placeholder="e.g. Class 4F" class="w-full border border-gray-300 rounded-lg py-3 px-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-6 text-left">
+                <label for="team-count" class="block text-sm font-medium text-gray-700 mb-2">How many teams?</label>
+                <select id="team-count" class="w-full border border-gray-300 rounded-lg py-3 px-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="2">2 Teams</option>
+                    <option value="3">3 Teams</option>
+                    <option value="4" selected>4 Teams</option>
+                    <option value="5">5 Teams</option>
+                    <option value="6">6 Teams</option>
+                </select>
+            </div>
+            <button onclick="app.startTeacherDashboard()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition shadow">
+                Start Game Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Screen 2: Student - Team Selection -->
+    <div id="student-setup" class="app-container items-center justify-center hide">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full animate-slide-in text-center">
+             <h2 class="text-3xl font-bold text-gray-800 mb-6">Join Your Team!</h2>
+             <p class="text-gray-600 mb-6">Which supermarket aisle are you in?</p>
+
+             <div id="student-team-buttons" class="grid grid-cols-2 gap-4">
+                 <!-- Generated dynamically based on teacher settings -->
+             </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Student - Waiting for Teacher -->
+    <div id="student-waiting" class="app-container items-center justify-center hide">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center animate-slide-in">
+            <div class="text-6xl mb-4" id="team-icon-display">🛒</div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to <span id="display-team-name" class="text-green-600"></span>!</h2>
+            
+            <div id="waiting-message-container" class="mt-8 p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                <div class="animate-pulse flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-lg font-semibold text-gray-600" id="waiting-status-text">Eyes on the teacher!</p>
+                    <p class="text-sm text-gray-500 mt-2">Waiting for the next round to begin...</p>
+                </div>
+            </div>
+
+            <div id="huddle-message-container" class="mt-8 p-6 bg-blue-50 rounded-xl border-2 border-blue-200 hide">
+                <h3 class="text-xl font-bold text-blue-800 mb-2">Check your teammates' carts!</h3>
+                <p class="text-blue-700">Help your team out. Whisper and check answers together before the teacher locks the round!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 4: Student - Gameplay -->
+    <div id="student-gameplay" class="app-container hide">
+        <!-- Header -->
+        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-md mb-6">
+            <div class="font-bold text-lg text-gray-700"><span id="game-team-name"></span> Member</div>
+            <div class="flex items-center text-gray-500">
+                <svg class="w-5 h-5 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="student-timer">00:00</span>
+            </div>
+        </div>
+
+        <!-- Question Area -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-6 text-center">
+            <h2 class="text-xl font-semibold text-gray-600 mb-4 uppercase tracking-wide" id="question-title">Round 1</h2>
+            
+            <!-- Context Image/Prices (Simulated from book) -->
+            <div class="flex justify-center gap-6 mb-8 bg-gray-50 p-4 rounded-xl" id="context-area">
+                <!-- Injected via JS based on question -->
+            </div>
+
+            <!-- Sentence Building Area -->
+            <div class="text-2xl leading-loose font-medium text-gray-800 flex flex-wrap justify-center items-center gap-2 mb-8" id="sentence-builder-area">
+                <!-- Injected via JS -->
+            </div>
+            
+            <button id="submit-btn" onclick="app.submitAnswer()" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-12 rounded-xl text-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Submit to Cart 🛒
+            </button>
+        </div>
+
+        <!-- Word Bank (Options) -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 text-center">Tap words to fill the blanks</h3>
+            <div class="flex flex-wrap justify-center gap-3" id="word-bank-area">
+                <!-- Injected via JS -->
+            </div>
+            <div class="text-center mt-4">
+                 <button onclick="app.clearBlanks()" class="text-sm text-gray-500 hover:text-red-500 underline">Clear All Blanks</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 5: Teacher Dashboard Main -->
+    <div id="teacher-dashboard" class="app-container hide">
+        <div class="bg-gray-800 text-white p-4 rounded-t-2xl flex justify-between items-center shadow-md">
+            <h1 class="text-2xl font-bold flex items-center">
+                <span class="mr-2">🍎</span> Supermarket Sweep - Teacher Live Control
+            </h1>
+            <div id="dashboard-class-name" class="text-sm bg-gray-700 px-3 py-1 rounded-full">Class 4F</div>
+        </div>
+
+        <!-- Teacher Controls -->
+        <div class="bg-white p-6 rounded-b-2xl shadow-lg mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex-1">
+                    <h2 class="text-xl font-bold text-gray-800" id="teacher-round-status">Status: Waiting to Start</h2>
+                    <p class="text-gray-500 text-sm" id="teacher-current-question-preview">No active question.</p>
+                </div>
+                
+                <div class="flex flex-wrap justify-center md:justify-end gap-3">
+                    <button id="btn-preview-q" onclick="app.teacherPreviewQuestion()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-3 px-6 rounded-xl shadow transition flex items-center">
+                        <span class="mr-2">👀</span> Student Preview
+                    </button>
+                    <button onclick="app.openManageQuestions()" class="bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-3 px-6 rounded-xl shadow transition flex items-center">
+                        <span class="mr-2">⚙️</span> Edit Questions
+                    </button>
+                    <button id="btn-push-q" onclick="app.teacherPushQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow transition">
+                        Start Next Round
+                    </button>
+                    <button id="btn-lock-q" onclick="app.teacherLockRound()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl shadow transition hide">
+                        Lock Round (Go to Reveal)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Status / Leaderboard (Smartboard View) -->
+        <div class="bg-white p-8 rounded-2xl shadow-xl flex-1 border-4 border-indigo-100" id="smartboard-view">
+            
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-extrabold text-indigo-900" id="board-title">Welcome to the Checkout Line!</h2>
+                <p class="text-lg text-gray-600 mt-2" id="board-subtitle">Teams are getting ready.</p>
+            </div>
+
+            <!-- Team Pods Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="team-pods-container">
+                <!-- Team Pod Template (Generated via JS) -->
+            </div>
+
+            <!-- Reveal Controls (Only visible on teacher's actual device, ideally, but here for demo) -->
+            <div class="mt-12 text-center" id="reveal-controls" style="display: none;">
+                <p class="text-sm text-gray-500 mb-4 uppercase tracking-wider font-bold">Teacher Reveal Controls (Tap to reveal to class)</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="app.revealAccuracy()" id="btn-reveal-acc" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg text-xl transform transition hover:scale-105">
+                        1. Reveal Accuracy %
+                    </button>
+                    <button onclick="app.revealSpeed()" id="btn-reveal-speed" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-xl transform transition hover:scale-105 opacity-50 cursor-not-allowed" disabled>
+                        2. Reveal Speed Tie-Breaker
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Final Leaderboard Display -->
+            <div id="final-leaderboard" class="mt-8 p-6 bg-yellow-50 rounded-xl border-2 border-yellow-200 hide text-center">
+                 <h2 class="text-3xl font-extrabold text-yellow-600 mb-4">🏆 Final Standings 🏆</h2>
+                 <div id="final-standings-list" class="space-y-3 max-w-lg mx-auto text-left text-lg font-medium text-gray-800">
+                     <!-- Injected -->
+                 </div>
+                 <button onclick="app.resetGame()" class="mt-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">Reset Game for Next Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Modal (Replaces Alert) -->
+    <div id="custom-message-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hide">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center animate-slide-in">
+            <div class="text-4xl mb-4">⚠️</div>
+            <p id="custom-message-text" class="text-lg font-bold text-gray-800 mb-6">Message goes here</p>
+            <button onclick="document.getElementById('custom-message-modal').classList.add('hide')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg w-full">Got it</button>
+        </div>
+    </div>
+
+    <!-- Teacher Student Preview Modal -->
+    <div id="teacher-preview-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-[60] flex items-center justify-center p-4 hide">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="bg-indigo-600 text-white p-4 rounded-t-2xl flex justify-between items-center sticky top-0 z-10">
+                <h2 class="text-xl font-bold flex items-center">
+                    <span class="mr-2">👀</span> Student View Preview
+                </h2>
+                <button onclick="app.closeTeacherPreview()" class="text-white hover:text-indigo-200 focus:outline-none transition">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 bg-gray-50 flex-1">
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-6 rounded shadow-sm">
+                    <p class="font-bold">Interactive Preview Mode</p>
+                    <p class="text-sm">This is exactly what the students will see for the current (or next) round. You can interact with the word bank to test the flow.</p>
+                </div>
+                
+                <!-- Replicated Student Gameplay Area -->
+                <div class="bg-white p-6 rounded-2xl shadow border border-gray-200 mb-6 text-center">
+                    <h2 class="text-xl font-semibold text-gray-600 mb-4 uppercase tracking-wide" id="preview-question-title">Round Title</h2>
+                    <div class="flex flex-wrap justify-center gap-6 mb-8 bg-gray-50 p-4 rounded-xl" id="preview-context-area"></div>
+                    <div class="text-2xl leading-loose font-medium text-gray-800 flex flex-wrap justify-center items-center gap-2 mb-8" id="preview-sentence-builder-area"></div>
+                    
+                    <button class="w-full sm:w-auto bg-gray-400 text-white font-bold py-3 px-12 rounded-xl text-xl shadow-md cursor-not-allowed" disabled>
+                        Submit to Cart 🛒 (Disabled in Preview)
+                    </button>
+                </div>
+                
+                <!-- Replicated Word Bank -->
+                <div class="bg-white p-6 rounded-2xl shadow border border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 text-center">Tap words to fill the blanks</h3>
+                    <div class="flex flex-wrap justify-center gap-3" id="preview-word-bank-area"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 6: Teacher Manage Questions -->
+    <div id="teacher-manage-questions" class="app-container hide min-h-screen">
+        <div class="bg-gray-800 text-white p-6 rounded-t-2xl flex justify-between items-center shadow-md">
+            <h1 class="text-2xl font-bold flex items-center">
+                <span class="mr-2">⚙️</span> Question Editor
+            </h1>
+            <button onclick="app.closeManageQuestions()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-semibold transition text-sm shadow">
+                Return to Dashboard
+            </button>
+        </div>
+        <div class="bg-white p-6 rounded-b-2xl shadow-lg flex-1 border border-t-0 border-gray-200">
+            <div class="mb-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
+                <p class="text-gray-600 font-medium">Add, edit, or remove questions for this class session.</p>
+                <button onclick="app.openQuestionForm(-1)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow transition flex items-center">
+                    <span class="mr-1">➕</span> Add New Question
+                </button>
+            </div>
+            <ul id="questions-list" class="space-y-4">
+                <!-- Injected via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal: Question Editor Form -->
+    <div id="question-form-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-[70] flex items-center justify-center p-4 hide overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-slide-in">
+            <div class="bg-blue-600 text-white p-5 rounded-t-2xl flex justify-between items-center sticky top-0 z-10 shadow-md">
+                <h2 class="text-xl font-bold" id="q-modal-title">Question Setup</h2>
+                <button onclick="app.closeQuestionForm()" class="text-white hover:text-blue-200 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-700 mb-1">Round Title</label>
+                    <input type="text" id="q-title" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:ring-0 outline-none transition" placeholder="e.g. Round 1: Comparative Adjectives">
+                </div>
+
+                <div class="bg-gray-50 p-5 rounded-xl border-2 border-gray-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-extrabold text-gray-700">Context Images & Labels</label>
+                        <button onclick="app.addContextItemUI()" class="text-sm bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold py-1 px-3 rounded-lg shadow-sm transition">+ Add Item</button>
+                    </div>
+                    <div id="context-items-list">
+                        <!-- Dynamic Context Items -->
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3 font-medium">Add image URLs and text labels to build the visual context for the students. Using both creates an engaging visual.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-700 mb-1">Sentence with Blanks</label>
+                    <textarea id="q-sentence" rows="2" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:ring-0 outline-none transition" placeholder="e.g. The {1} is {2} than the {3}." oninput="app.updateAnswerMapping()"></textarea>
+                    <p class="text-xs text-gray-500 mt-2 font-medium">Type the full sentence and use {1}, {2}, etc., to denote where the drag & drop blanks should appear.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-700 mb-1">Word Bank Options</label>
+                    <input type="text" id="q-options" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:ring-0 outline-none transition" placeholder="e.g. lighter, heavier, watermelon, grapes" oninput="app.updateAnswerMapping()">
+                    <p class="text-xs text-gray-500 mt-2 font-medium">Provide a comma-separated list of all words available to students in the drag & drop bank.</p>
+                </div>
+
+                <div class="bg-blue-50 p-5 rounded-xl border-2 border-blue-100">
+                    <label class="block text-sm font-extrabold text-blue-800 mb-3">Map Correct Answers</label>
+                    <div id="q-answer-mapping" class="space-y-3">
+                        <!-- Dynamic Mapping UI -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-t-2 border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                <button onclick="app.closeQuestionForm()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-xl transition">Cancel</button>
+                <button onclick="app.saveQuestionData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition transform hover:-translate-y-0.5">Save Question</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Supermarket Sweep - Game Logic
+         * Simulates a server/client multiplayer environment locally for demonstration.
+         */
+        const app = {
+            role: null, // 'teacher' or 'student'
+            studentTeam: null,
+            studentTimerInterval: null,
+            startTime: 0,
+            
+            // Simulation State (Acting as the 'backend')
+            gameState: {
+                className: 'Class 4F',
+                currentRoundIndex: -1,
+                status: 'waiting', // waiting, active, locked, finished
+                numberOfTeams: 4,
+                teams: {} // Populated dynamically based on numberOfTeams
+            },
+
+            // Available team configurations
+            teamConfigs: [
+                { name: 'Bakery', icon: '🥖', color: 'yellow' },
+                { name: 'Dairy', icon: '🥛', color: 'blue' },
+                { name: 'Produce', icon: '🍎', color: 'green' },
+                { name: 'Frozen', icon: '❄️', color: 'cyan' },
+                { name: 'Snacks', icon: '🥨', color: 'orange' },
+                { name: 'Drinks', icon: '🧃', color: 'purple' }
+            ],
+
+            // Curriculum Data (Derived from textbook photos & language focus 1 & 2)
+            questions: [
+                {
+                    title: "Round 1: Short Adjectives (Comparative)",
+                    contextHtml: `
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/4ade80/ffffff?text=Watermelon\n5kg" alt="Watermelon" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-700 mt-1">Watermelon (5kg)</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/a3e635/ffffff?text=Pears\n300g" alt="Pears" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-700 mt-1">Pears (300g)</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/9333ea/ffffff?text=Grapes\n250g" alt="Grapes" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-700 mt-1">Grapes (250g)</div>
+                        </div>
+                    `,
+                    sentenceStructure: ["The pears are", "{1}", "than the", "{2}", "."],
+                    options: ["lighter", "heavier", "lightest", "watermelon", "grapes"],
+                    correctAnswers: { "1": "lighter", "2": "watermelon" }
+                },
+                {
+                    title: "Round 2: Short Adjectives (Superlative)",
+                    contextHtml: `
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/b45309/ffffff?text=Yummy\nRaisins" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-yellow-200 px-4 py-1 rounded-full shadow-sm mt-1">$25</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/d97706/ffffff?text=Natural\nRaisins" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-yellow-200 px-4 py-1 rounded-full shadow-sm mt-1">$28</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/f59e0b/ffffff?text=Super\nRaisins" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-yellow-200 px-4 py-1 rounded-full shadow-sm mt-1">$32</div>
+                        </div>
+                    `,
+                    sentenceStructure: ["Yummy Raisins are the", "{1}", "raisins."],
+                    options: ["cheap", "cheaper", "cheapest", "expensive"],
+                    correctAnswers: { "1": "cheapest" }
+                },
+                {
+                    title: "Round 3: Long Adjectives (Comparative)",
+                    contextHtml: `
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/ef4444/ffffff?text=Jolly\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="text-xl bg-gray-100 px-3 py-1 rounded-full mt-1 border border-gray-200">😋😋😋</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/f97316/ffffff?text=Pure\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="text-xl bg-gray-100 px-3 py-1 rounded-full mt-1 border border-gray-200">😋😋</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/eab308/ffffff?text=Fruity\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="text-xl bg-gray-100 px-3 py-1 rounded-full mt-1 border border-gray-200">😋😋😋😋</div>
+                        </div>
+                    `,
+                    sentenceStructure: ["Fruity Orange Juice is", "{1}", "{2}", "than Pure Orange Juice."],
+                    options: ["more", "most", "delicious", "popular"],
+                    correctAnswers: { "1": "more", "2": "delicious" }
+                },
+                {
+                    title: "Round 4: Long Adjectives (Superlative)",
+                    contextHtml: `
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/ef4444/ffffff?text=Jolly\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-green-200 px-4 py-1 rounded-full shadow-sm mt-1">$9.20</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/f97316/ffffff?text=Pure\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-green-200 px-4 py-1 rounded-full shadow-sm mt-1">$11.80</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/eab308/ffffff?text=Fruity\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-green-200 px-4 py-1 rounded-full shadow-sm mt-1">$10.50</div>
+                        </div>
+                    `,
+                    sentenceStructure: ["Pure Orange Juice is the", "{1}", "{2}", "brand."],
+                    options: ["most", "more", "expensive", "popular"],
+                    correctAnswers: { "1": "most", "2": "expensive" }
+                },
+                {
+                    title: "Round 5: Full Sentence Challenge! (Bread)",
+                    contextHtml: `
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/d97706/ffffff?text=Lucky\nBread" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-yellow-200 px-4 py-1 rounded-full shadow-sm mt-1">$14</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/b45309/ffffff?text=Merry\nBread" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-yellow-200 px-4 py-1 rounded-full shadow-sm mt-1">$18</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <img src="https://placehold.co/120x120/92400e/ffffff?text=Happy\nBread" class="rounded-xl shadow-md mb-2 border-4 border-gray-200">
+                            <div class="font-bold text-gray-800 bg-yellow-200 px-4 py-1 rounded-full shadow-sm mt-1">$20</div>
+                        </div>
+                    `,
+                    sentenceStructure: ["{1}", "{2}", "{3}", "{4}"],
+                    options: ["Lucky Bread", "Happy Bread", "is", "the", "cheapest.", "most expensive."],
+                    correctAnswers: { "1": "Lucky Bread", "2": "is", "3": "the", "4": "cheapest." }
+                },
+                {
+                    title: "Round 6: Full Sentence Challenge! (Drinks)",
+                    contextHtml: `
+                        <div class="flex flex-col items-center justify-center w-full">
+                            <div class="w-full max-w-md bg-blue-100 p-2 rounded-t-xl text-center text-blue-800 font-bold border-b-2 border-blue-200 uppercase tracking-wide">Which drink do you like?</div>
+                            <div class="flex justify-center gap-6 bg-blue-50 w-full max-w-md p-4 rounded-b-xl border-x border-b border-blue-100">
+                                <div class="flex flex-col items-center">
+                                    <img src="https://placehold.co/100x100/ef4444/ffffff?text=Cola" class="rounded-xl shadow-md mb-2 border-4 border-white">
+                                    <div class="text-xl">❤️❤️❤️❤️</div>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <img src="https://placehold.co/100x100/f97316/ffffff?text=Orange\nJuice" class="rounded-xl shadow-md mb-2 border-4 border-white">
+                                    <div class="text-xl">❤️❤️❤️</div>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <img src="https://placehold.co/100x100/fde047/a16207?text=Soya\nMilk" class="rounded-xl shadow-md mb-2 border-4 border-white">
+                                    <div class="text-xl">❤️❤️</div>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    sentenceStructure: ["{1}", "{2}", "{3}", "{4}", "{5}"],
+                    options: ["Cola", "Soya milk", "is", "the", "more", "most", "popular."],
+                    correctAnswers: { "1": "Cola", "2": "is", "3": "the", "4": "most", "5": "popular." }
+                }
+            ],
+
+            currentAnswers: {}, // Stores student's current blank selections
+            previewAnswers: {}, // Stores teacher's preview blank selections
+            editingQuestionIndex: -1, // Tracks which question is being edited
+            currentAnswerMapTemp: {}, // Temporary storage for answer mappings in editor
+
+            init: function() {
+                // Determine if we need to show role selection
+                this.showScreen('role-selection');
+            },
+
+            showScreen: function(screenId) {
+                const screens = ['role-selection', 'teacher-setup', 'student-setup', 'student-waiting', 'student-gameplay', 'teacher-dashboard', 'teacher-manage-questions'];
+                screens.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.classList.add('hide');
+                });
+                const activeEl = document.getElementById(screenId);
+                if(activeEl) activeEl.classList.remove('hide');
+            },
+
+            showCustomMessage: function(msg) {
+                document.getElementById('custom-message-text').innerText = msg;
+                document.getElementById('custom-message-modal').classList.remove('hide');
+            },
+
+            selectRole: function(selectedRole) {
+                this.role = selectedRole;
+                if (this.role === 'teacher') {
+                    this.showScreen('teacher-setup');
+                } else {
+                    // In a real app, this would fetch the current configuration from the server
+                    this.setupStudentTeams();
+                    this.showScreen('student-setup');
+                }
+            },
+
+            startTeacherDashboard: function() {
+                const count = parseInt(document.getElementById('team-count').value, 10);
+                const className = document.getElementById('class-name-input').value.trim();
+                
+                this.gameState.numberOfTeams = count;
+                this.gameState.className = className || 'Class 4F';
+                
+                document.getElementById('dashboard-class-name').innerText = this.gameState.className;
+                
+                this.initializeTeams();
+                
+                this.showScreen('teacher-dashboard');
+                this.renderTeamPods();
+            },
+
+            initializeTeams: function() {
+                this.gameState.teams = {};
+                for (let i = 0; i < this.gameState.numberOfTeams; i++) {
+                    const config = this.teamConfigs[i];
+                    this.gameState.teams[config.name] = { 
+                        members: 4, 
+                        submissions: [], 
+                        accuracyScore: 0, 
+                        totalSpeed: 0, 
+                        totalScore: 0,
+                        icon: config.icon,
+                        color: config.color
+                    };
+                }
+            },
+
+            setupStudentTeams: function() {
+                // Mock initializing teams if student connects before teacher in this local sim
+                if(Object.keys(this.gameState.teams).length === 0) {
+                     this.initializeTeams();
+                }
+
+                const container = document.getElementById('student-team-buttons');
+                container.innerHTML = '';
+                
+                for(let i=0; i < this.gameState.numberOfTeams; i++) {
+                    const t = this.teamConfigs[i];
+                    const btn = document.createElement('button');
+                    // Simplified color mapping for Tailwind classes based on config color
+                    let bgBase, bgHover, textCol, borderCol;
+                    switch(t.color) {
+                        case 'yellow': bgBase='bg-yellow-100'; bgHover='hover:bg-yellow-200'; textCol='text-yellow-800'; borderCol='border-yellow-300'; break;
+                        case 'blue': bgBase='bg-blue-100'; bgHover='hover:bg-blue-200'; textCol='text-blue-800'; borderCol='border-blue-300'; break;
+                        case 'green': bgBase='bg-green-100'; bgHover='hover:bg-green-200'; textCol='text-green-800'; borderCol='border-green-300'; break;
+                        case 'cyan': bgBase='bg-cyan-100'; bgHover='hover:bg-cyan-200'; textCol='text-cyan-800'; borderCol='border-cyan-300'; break;
+                        case 'orange': bgBase='bg-orange-100'; bgHover='hover:bg-orange-200'; textCol='text-orange-800'; borderCol='border-orange-300'; break;
+                        case 'purple': bgBase='bg-purple-100'; bgHover='hover:bg-purple-200'; textCol='text-purple-800'; borderCol='border-purple-300'; break;
+                        default: bgBase='bg-gray-100'; bgHover='hover:bg-gray-200'; textCol='text-gray-800'; borderCol='border-gray-300';
+                    }
+                    
+                    btn.className = `${bgBase} ${bgHover} ${textCol} font-bold py-4 px-4 rounded-xl border-2 ${borderCol} transition`;
+                    btn.innerHTML = `${t.icon} Team ${t.name}`;
+                    btn.onclick = () => this.joinTeam(t.name, t.icon);
+                    container.appendChild(btn);
+                }
+            },
+
+            joinTeam: function(teamName, teamIcon) {
+                this.studentTeam = teamName;
+                
+                document.getElementById('team-icon-display').innerText = teamIcon;
+                document.getElementById('display-team-name').innerText = 'Team ' + teamName;
+                document.getElementById('game-team-name').innerText = 'Team ' + teamName;
+                
+                this.showScreen('student-waiting');
+                
+                // Simulate listening to server for game start
+                this.simulateServerPolling();
+            },
+
+            loadQuestionForStudent: function() {
+                const q = this.questions[this.gameState.currentRoundIndex];
+                document.getElementById('question-title').innerText = q.title;
+                document.getElementById('context-area').innerHTML = q.contextHtml;
+                
+                this.currentAnswers = {};
+                this.renderSentenceBuilder(q);
+                this.renderWordBank(q);
+                
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('submit-btn').innerText = "Submit to Cart 🛒";
+                
+                this.startTimer();
+                this.showScreen('student-gameplay');
+            },
+
+            renderSentenceBuilder: function(q) {
+                const area = document.getElementById('sentence-builder-area');
+                area.innerHTML = '';
+                
+                q.sentenceStructure.forEach(part => {
+                    if (part.startsWith('{') && part.endsWith('}')) {
+                        const blankId = part.replace('{', '').replace('}', '');
+                        const dropZone = document.createElement('span');
+                        dropZone.id = `blank-${blankId}`;
+                        dropZone.className = 'drop-zone cursor-pointer';
+                        dropZone.onclick = () => this.removeWordFromBlank(blankId);
+                        area.appendChild(dropZone);
+                        this.currentAnswers[blankId] = null; // Initialize
+                    } else {
+                        const textNode = document.createElement('span');
+                        textNode.innerText = part;
+                        area.appendChild(textNode);
+                    }
+                });
+                this.highlightNextBlank();
+            },
+
+            renderWordBank: function(q) {
+                const area = document.getElementById('word-bank-area');
+                area.innerHTML = '';
+                
+                // Shuffle options for fun
+                const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+                
+                shuffled.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = 'word-bank-btn bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm';
+                    btn.innerText = word;
+                    btn.onclick = () => this.addWordToBlank(word, btn);
+                    area.appendChild(btn);
+                });
+            },
+
+            highlightNextBlank: function() {
+                // Remove all highlights
+                document.querySelectorAll('.drop-zone').forEach(el => el.classList.remove('active-input'));
+                
+                // Find first empty blank
+                for (const key in this.currentAnswers) {
+                    if (this.currentAnswers[key] === null) {
+                        document.getElementById(`blank-${key}`).classList.add('active-input');
+                        return;
+                    }
+                }
+            },
+
+            addWordToBlank: function(word, btnElement) {
+                for (const key in this.currentAnswers) {
+                    if (this.currentAnswers[key] === null) {
+                        this.currentAnswers[key] = word;
+                        const el = document.getElementById(`blank-${key}`);
+                        el.innerText = word;
+                        el.classList.add('filled');
+                        
+                        // Disable button in word bank (optional, let's keep it simple and just let them reuse if they want, or we can hide it)
+                        // btnElement.classList.add('opacity-50', 'cursor-not-allowed');
+                        
+                        this.highlightNextBlank();
+                        return;
+                    }
+                }
+            },
+
+            removeWordFromBlank: function(blankId) {
+                if (this.currentAnswers[blankId]) {
+                    this.currentAnswers[blankId] = null;
+                    const el = document.getElementById(`blank-${blankId}`);
+                    el.innerText = '';
+                    el.classList.remove('filled');
+                    this.highlightNextBlank();
+                }
+            },
+
+            clearBlanks: function() {
+                for (const key in this.currentAnswers) {
+                    this.removeWordFromBlank(key);
+                }
+            },
+
+            startTimer: function() {
+                this.startTime = Date.now();
+                const timerEl = document.getElementById('student-timer');
+                if (this.studentTimerInterval) clearInterval(this.studentTimerInterval);
+                
+                this.studentTimerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                    const secs = String(elapsed % 60).padStart(2, '0');
+                    timerEl.innerText = `${mins}:${secs}`;
+                }, 1000);
+            },
+
+            submitAnswer: function() {
+                // Check if all blanks filled
+                for (const key in this.currentAnswers) {
+                    if (this.currentAnswers[key] === null) {
+                        this.showCustomMessage("Please fill all the blanks before submitting!");
+                        return;
+                    }
+                }
+
+                clearInterval(this.studentTimerInterval);
+                const timeTaken = Math.floor((Date.now() - this.startTime) / 1000);
+                const q = this.questions[this.gameState.currentRoundIndex];
+                
+                // Calculate correctness
+                let correctCount = 0;
+                let totalBlanks = Object.keys(q.correctAnswers).length;
+                
+                for (const key in q.correctAnswers) {
+                    if (this.currentAnswers[key] === q.correctAnswers[key]) {
+                        correctCount++;
+                    }
+                }
+                const isPerfect = correctCount === totalBlanks;
+
+                // Disable submit
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').innerText = "Submitted! ✓";
+                
+                // Send to simulated backend
+                this.simulateSendToServer({
+                    team: this.studentTeam,
+                    isPerfect: isPerfect,
+                    timeTaken: timeTaken
+                });
+
+                // Show huddle message
+                setTimeout(() => {
+                    this.showScreen('student-waiting');
+                    document.getElementById('waiting-message-container').classList.add('hide');
+                    document.getElementById('huddle-message-container').classList.remove('hide');
+                }, 1000);
+            },
+
+            renderTeamPods: function() {
+                const container = document.getElementById('team-pods-container');
+                container.innerHTML = '';
+                
+                // Adjust grid columns based on number of teams
+                container.className = 'grid gap-6 ';
+                if(this.gameState.numberOfTeams <= 2) container.classList.add('grid-cols-1', 'md:grid-cols-2');
+                else if(this.gameState.numberOfTeams === 3) container.classList.add('grid-cols-1', 'md:grid-cols-3');
+                else container.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-4');
+
+                for (const team in this.gameState.teams) {
+                    const teamData = this.gameState.teams[team];
+                    const pod = document.createElement('div');
+                    pod.className = 'bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col items-center transition-all duration-500';
+                    pod.id = `pod-${team}`;
+                    
+                    pod.innerHTML = `
+                        <div class="text-4xl mb-2">${teamData.icon}</div>
+                        <h3 class="font-bold text-gray-800 text-lg">Team ${team}</h3>
+                        
+                        <!-- Status Bar -->
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 mb-1">
+                            <div class="bg-blue-600 h-2.5 rounded-full" id="progress-${team}" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4"><span id="subs-${team}">0</span>/${teamData.members} submitted</p>
+
+                        <!-- Reveal Areas (Hidden initially) -->
+                        <div class="w-full space-y-2 mt-auto">
+                            <div class="bg-white border-2 border-purple-100 rounded-lg p-2 text-center reveal-acc hide" id="acc-box-${team}">
+                                <p class="text-xs text-purple-600 font-bold uppercase">Accuracy</p>
+                                <p class="text-3xl font-extrabold text-gray-800" id="acc-val-${team}">--%</p>
+                            </div>
+                            <div class="bg-white border-2 border-orange-100 rounded-lg p-2 text-center reveal-spd hide" id="spd-box-${team}">
+                                <p class="text-xs text-orange-600 font-bold uppercase">Avg Speed</p>
+                                <p class="text-xl font-bold text-gray-600" id="spd-val-${team}">-- s</p>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(pod);
+                }
+            },
+
+            teacherPushQuestion: function() {
+                this.gameState.currentRoundIndex++;
+                if (this.gameState.currentRoundIndex >= this.questions.length) {
+                    this.showFinalLeaderboard();
+                    return;
+                }
+
+                this.gameState.status = 'active';
+                const q = this.questions[this.gameState.currentRoundIndex];
+                
+                // Update Teacher UI
+                document.getElementById('teacher-round-status').innerText = `Active: ${q.title}`;
+                document.getElementById('teacher-current-question-preview').innerText = "Students are building the sentence...";
+                document.getElementById('board-title').innerText = "Supermarket Sweep is On!";
+                document.getElementById('board-subtitle').innerText = "Whisper to your teammates and submit your answers!";
+                
+                document.getElementById('btn-push-q').classList.add('hide');
+                document.getElementById('btn-lock-q').classList.remove('hide');
+                document.getElementById('reveal-controls').style.display = 'none';
+
+                // Reset Pods
+                for (const team in this.gameState.teams) {
+                    this.gameState.teams[team].submissions = [];
+                    document.getElementById(`progress-${team}`).style.width = '0%';
+                    document.getElementById(`subs-${team}`).innerText = '0';
+                    
+                    document.getElementById(`acc-box-${team}`).classList.add('hide');
+                    document.getElementById(`spd-box-${team}`).classList.add('hide');
+                    document.getElementById(`pod-${team}`).classList.remove('ring-4', 'ring-green-400', 'bg-green-50');
+                }
+
+                // In a real app, send socket event. Here we simulate polling catching it.
+            },
+
+            teacherLockRound: function() {
+                this.gameState.status = 'locked';
+                
+                document.getElementById('teacher-round-status').innerText = "Round Locked - Big Reveal Time!";
+                document.getElementById('teacher-current-question-preview').innerText = "Calculate accuracy and speed on smartboard.";
+                document.getElementById('board-title').innerText = "Checkout Complete!";
+                document.getElementById('board-subtitle').innerText = "Let's check the receipts...";
+                
+                document.getElementById('btn-lock-q').classList.add('hide');
+                document.getElementById('reveal-controls').style.display = 'block';
+                
+                // Reset Reveal Buttons
+                const btnAcc = document.getElementById('btn-reveal-acc');
+                const btnSpd = document.getElementById('btn-reveal-speed');
+                
+                btnAcc.disabled = false;
+                btnAcc.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnAcc.innerText = "1. Reveal Accuracy %";
+                
+                btnSpd.disabled = true;
+                btnSpd.classList.add('opacity-50', 'cursor-not-allowed');
+            },
+
+            teacherPreviewQuestion: function() {
+                // Determine which question to preview (current active, or upcoming first round if not started)
+                const roundIndex = Math.max(0, this.gameState.currentRoundIndex);
+                if (roundIndex >= this.questions.length) {
+                    this.showCustomMessage("The game is over. No more questions to preview.");
+                    return;
+                }
+                
+                const q = this.questions[roundIndex];
+                document.getElementById('preview-question-title').innerText = "Previewing: " + q.title;
+                document.getElementById('preview-context-area').innerHTML = q.contextHtml;
+                
+                this.previewAnswers = {};
+                this.renderPreviewSentenceBuilder(q);
+                this.renderPreviewWordBank(q);
+                
+                document.getElementById('teacher-preview-modal').classList.remove('hide');
+            },
+            
+            closeTeacherPreview: function() {
+                document.getElementById('teacher-preview-modal').classList.add('hide');
+            },
+
+            renderPreviewSentenceBuilder: function(q) {
+                const area = document.getElementById('preview-sentence-builder-area');
+                area.innerHTML = '';
+                
+                q.sentenceStructure.forEach(part => {
+                    if (part.startsWith('{') && part.endsWith('}')) {
+                        const blankId = part.replace('{', '').replace('}', '');
+                        const dropZone = document.createElement('span');
+                        dropZone.id = `preview-blank-${blankId}`;
+                        dropZone.className = 'drop-zone cursor-pointer';
+                        dropZone.onclick = () => this.removeWordFromPreviewBlank(blankId);
+                        area.appendChild(dropZone);
+                        this.previewAnswers[blankId] = null;
+                    } else {
+                        const textNode = document.createElement('span');
+                        textNode.innerText = part;
+                        area.appendChild(textNode);
+                    }
+                });
+                this.highlightNextPreviewBlank();
+            },
+
+            renderPreviewWordBank: function(q) {
+                const area = document.getElementById('preview-word-bank-area');
+                area.innerHTML = '';
+                
+                const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+                
+                shuffled.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = 'word-bank-btn bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm';
+                    btn.innerText = word;
+                    btn.onclick = () => this.addWordToPreviewBlank(word);
+                    area.appendChild(btn);
+                });
+            },
+
+            highlightNextPreviewBlank: function() {
+                document.querySelectorAll('#preview-sentence-builder-area .drop-zone').forEach(el => el.classList.remove('active-input'));
+                for (const key in this.previewAnswers) {
+                    if (this.previewAnswers[key] === null) {
+                        document.getElementById(`preview-blank-${key}`).classList.add('active-input');
+                        return;
+                    }
+                }
+            },
+
+            addWordToPreviewBlank: function(word) {
+                for (const key in this.previewAnswers) {
+                    if (this.previewAnswers[key] === null) {
+                        this.previewAnswers[key] = word;
+                        const el = document.getElementById(`preview-blank-${key}`);
+                        el.innerText = word;
+                        el.classList.add('filled');
+                        this.highlightNextPreviewBlank();
+                        return;
+                    }
+                }
+            },
+
+            removeWordFromPreviewBlank: function(blankId) {
+                if (this.previewAnswers[blankId]) {
+                    this.previewAnswers[blankId] = null;
+                    const el = document.getElementById(`preview-blank-${blankId}`);
+                    el.innerText = '';
+                    el.classList.remove('filled');
+                    this.highlightNextPreviewBlank();
+                }
+            },
+
+            // The "Big Reveal" Step 1
+            revealAccuracy: function() {
+                const btnAcc = document.getElementById('btn-reveal-acc');
+                btnAcc.innerText = "Accuracy Revealed ✓";
+                btnAcc.disabled = true;
+                btnAcc.classList.add('opacity-50', 'cursor-not-allowed');
+
+                const btnSpd = document.getElementById('btn-reveal-speed');
+                btnSpd.disabled = false;
+                btnSpd.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                // Calculate and animate reveal
+                for (const team in this.gameState.teams) {
+                    const data = this.gameState.teams[team];
+                    const subs = data.submissions;
+                    
+                    // Base accuracy logic: % of students in team who got it perfectly right.
+                    // If less than 4 submitted, missing ones count as 0.
+                    let perfectCount = subs.filter(s => s.isPerfect).length;
+                    let percentage = (perfectCount / data.members) * 100;
+                    
+                    data.accuracyScore = percentage;
+                    data.totalScore += percentage; // Cumulative
+
+                    const accBox = document.getElementById(`acc-box-${team}`);
+                    accBox.classList.remove('hide');
+                    accBox.classList.add('animate-slide-in');
+                    
+                    // Simple counter animation
+                    let curr = 0;
+                    const el = document.getElementById(`acc-val-${team}`);
+                    const interval = setInterval(() => {
+                        curr += 5;
+                        if (curr >= percentage) {
+                            curr = percentage;
+                            clearInterval(interval);
+                            
+                            // Visual feedback
+                            if(percentage === 100) {
+                                accBox.classList.remove('border-purple-100');
+                                accBox.classList.add('border-green-400', 'bg-green-50');
+                                el.classList.add('text-green-600');
+                            }
+                        }
+                        el.innerText = curr + '%';
+                    }, 50);
+                }
+            },
+
+            // The "Big Reveal" Step 2
+            revealSpeed: function() {
+                const btnSpd = document.getElementById('btn-reveal-speed');
+                btnSpd.innerText = "Speed Revealed ✓";
+                btnSpd.disabled = true;
+                btnSpd.classList.add('opacity-50', 'cursor-not-allowed');
+
+                document.getElementById('btn-push-q').classList.remove('hide');
+
+                let bestTeam = null;
+                let highestScore = -1;
+                let fastestAvg = 9999;
+
+                for (const team in this.gameState.teams) {
+                    const data = this.gameState.teams[team];
+                    const subs = data.submissions;
+                    
+                    let avgSpeed = 0;
+                    if(subs.length > 0) {
+                        const totalTime = subs.reduce((sum, s) => sum + s.timeTaken, 0);
+                        avgSpeed = Math.round(totalTime / subs.length);
+                    } else {
+                        avgSpeed = 999; // Penalty for no submissions
+                    }
+                    
+                    data.totalSpeed += avgSpeed;
+
+                    const spdBox = document.getElementById(`spd-box-${team}`);
+                    spdBox.classList.remove('hide');
+                    spdBox.classList.add('animate-slide-in');
+                    document.getElementById(`spd-val-${team}`).innerText = avgSpeed + 's';
+
+                    // Determine round winner based on exact parameters: Accuracy is King, Speed is Tie-Breaker
+                    if (data.accuracyScore > highestScore) {
+                        highestScore = data.accuracyScore;
+                        fastestAvg = avgSpeed;
+                        bestTeam = team;
+                    } else if (data.accuracyScore === highestScore) {
+                        if (avgSpeed < fastestAvg) {
+                            fastestAvg = avgSpeed;
+                            bestTeam = team;
+                        }
+                    }
+                }
+
+                // Highlight winner of the round
+                if (bestTeam) {
+                    const winnerPod = document.getElementById(`pod-${bestTeam}`);
+                    winnerPod.classList.add('ring-4', 'ring-yellow-400', 'bg-yellow-50', 'transform', 'scale-105');
+                    document.getElementById('board-subtitle').innerHTML = `Team <span class="font-bold text-yellow-600">${bestTeam}</span> wins this round!`;
+                    this.createConfetti(winnerPod);
+                }
+            },
+
+            showFinalLeaderboard: function() {
+                document.getElementById('teacher-round-status').innerText = "Game Over!";
+                document.getElementById('teacher-current-question-preview').innerText = "Final Results.";
+                document.getElementById('team-pods-container').classList.add('hide');
+                document.getElementById('reveal-controls').style.display = 'none';
+                
+                const board = document.getElementById('final-leaderboard');
+                board.classList.remove('hide');
+                
+                const list = document.getElementById('final-standings-list');
+                list.innerHTML = '';
+
+                // Calculate final rankings
+                let rankings = [];
+                for (const team in this.gameState.teams) {
+                    rankings.push({
+                        name: team,
+                        totalAcc: this.gameState.teams[team].totalScore,
+                        totalSpd: this.gameState.teams[team].totalSpeed
+                    });
+                }
+
+                // Sort: Accuracy descending, then Speed ascending
+                rankings.sort((a, b) => {
+                    if (b.totalAcc !== a.totalAcc) return b.totalAcc - a.totalAcc;
+                    return a.totalSpd - b.totalSpd;
+                });
+
+                const medals = ['🥇', '🥈', '🥉', '🏅'];
+                rankings.forEach((r, index) => {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                            <div>
+                                <span class="text-2xl mr-2">${medals[index]}</span>
+                                <span class="font-bold text-xl">Team ${r.name}</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-600 font-bold">${r.totalAcc}% Total Acc</div>
+                                <div class="text-gray-400 text-sm">${r.totalSpd}s Total Time</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+
+            simulateServerPolling: function() {
+                // For the student, poll the game state to know when to switch screens
+                setInterval(() => {
+                    if (this.role !== 'student') return;
+
+                    const status = this.gameState.status;
+                    
+                    if (status === 'active' && document.getElementById('student-gameplay').classList.contains('hide') && this.currentAnswers === {}) {
+                         // Only load if we haven't already for this round
+                         // Weak check for local demo purposes
+                    }
+                    
+                    if (status === 'active' && document.getElementById('student-gameplay').classList.contains('hide')) {
+                        // Reset huddle message
+                        document.getElementById('waiting-message-container').classList.remove('hide');
+                        document.getElementById('huddle-message-container').classList.add('hide');
+                        this.loadQuestionForStudent();
+                    }
+                    
+                    if (status === 'locked' && !document.getElementById('student-gameplay').classList.contains('hide')) {
+                         // Force them to waiting room if teacher locks
+                         this.showScreen('student-waiting');
+                         document.getElementById('waiting-status-text').innerText = "Look at the Smartboard!";
+                    }
+
+                }, 1000);
+            },
+
+            simulateSendToServer: function(data) {
+                // In a real app this is an API call. Here we mutate teacher state directly.
+                const team = this.gameState.teams[data.team];
+                team.submissions.push(data);
+                
+                // Update Teacher UI progress bar dynamically
+                if (this.role === 'teacher' || true) { // Always run in this single-page sim
+                    const p = (team.submissions.length / team.members) * 100;
+                    document.getElementById(`progress-${data.team}`).style.width = `${p}%`;
+                    document.getElementById(`subs-${data.team}`).innerText = team.submissions.length;
+                    
+                    // Auto-simulate other team members for the demo so the teacher isn't waiting forever
+                    if (team.submissions.length === 1) {
+                         setTimeout(() => { this.simulateTeammates(data.team); }, 2000 + Math.random() * 3000);
+                    }
+                }
+            },
+
+            simulateTeammates: function(teamName) {
+                // Simulates the other 3 students in the team answering
+                const team = this.gameState.teams[teamName];
+                while(team.submissions.length < team.members) {
+                    // Randomize correctness (mostly right) and time
+                    const isPerfect = Math.random() > 0.2; 
+                    const timeTaken = Math.floor(Math.random() * 20) + 10;
+                    team.submissions.push({ team: teamName, isPerfect: isPerfect, timeTaken: timeTaken });
+                }
+                // Update UI again
+                document.getElementById(`progress-${teamName}`).style.width = `100%`;
+                document.getElementById(`subs-${teamName}`).innerText = team.members;
+            },
+
+            createConfetti: function(element) {
+                const rect = element.getBoundingClientRect();
+                for (let i = 0; i < 30; i++) {
+                    const conf = document.createElement('div');
+                    conf.className = 'confetti';
+                    const colors = ['#fce18a', '#ff726d', '#b48def', '#f4306d'];
+                    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    conf.style.left = rect.left + Math.random() * rect.width + 'px';
+                    conf.style.top = rect.top + Math.random() * rect.height + 'px';
+                    document.body.appendChild(conf);
+
+                    // Simple physics
+                    let angle = Math.random() * Math.PI * 2;
+                    let velocity = 5 + Math.random() * 5;
+                    let x = parseFloat(conf.style.left);
+                    let y = parseFloat(conf.style.top);
+                    
+                    const anim = setInterval(() => {
+                        y += velocity; // gravity
+                        x += Math.cos(angle) * 2;
+                        conf.style.top = y + 'px';
+                        conf.style.left = x + 'px';
+                        
+                        if(y > window.innerHeight) {
+                            clearInterval(anim);
+                            conf.remove();
+                        }
+                    }, 20);
+                }
+            },
+
+            resetGame: function() {
+                location.reload();
+            },
+
+            // --- QUESTION EDITOR METHODS ---
+            openManageQuestions: function() {
+                this.showScreen('teacher-manage-questions');
+                this.renderQuestionList();
+            },
+
+            closeManageQuestions: function() {
+                this.showScreen('teacher-dashboard');
+            },
+
+            renderQuestionList: function() {
+                const list = document.getElementById('questions-list');
+                list.innerHTML = '';
+                
+                if(this.questions.length === 0) {
+                     list.innerHTML = '<li class="text-gray-500 italic p-4 text-center">No questions added yet. Click "Add New Question".</li>';
+                     return;
+                }
+
+                this.questions.forEach((q, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm transition hover:shadow-md';
+                    li.innerHTML = `
+                        <div class="mb-3 sm:mb-0">
+                            <span class="font-extrabold text-blue-600 mr-2">Q${index + 1}:</span> 
+                            <span class="text-gray-800 font-semibold">${q.title}</span>
+                        </div>
+                        <div class="flex space-x-2 w-full sm:w-auto justify-end">
+                            <button onclick="app.openQuestionForm(${index})" class="bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-lg hover:bg-indigo-200 transition">Edit</button>
+                            <button onclick="app.deleteQuestion(${index})" class="bg-red-100 text-red-700 font-bold px-4 py-2 rounded-lg hover:bg-red-200 transition">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            },
+
+            deleteQuestion: function(index) {
+                this.questions.splice(index, 1);
+                this.renderQuestionList();
+                this.showCustomMessage("Question successfully deleted.");
+            },
+
+            openQuestionForm: function(index = -1) {
+                this.editingQuestionIndex = index;
+                document.getElementById('context-items-list').innerHTML = '';
+                this.currentAnswerMapTemp = {};
+                
+                if (index >= 0) {
+                    const q = this.questions[index];
+                    document.getElementById('q-title').value = q.title;
+                    
+                    let sentenceStr = q.sentenceStructure.join(' '); 
+                    document.getElementById('q-sentence').value = sentenceStr;
+                    document.getElementById('q-options').value = q.options.join(', ');
+                    this.currentAnswerMapTemp = { ...q.correctAnswers };
+                    
+                    if (q.contextData && q.contextData.length > 0) {
+                         q.contextData.forEach(item => this.addContextItemUI(item.img, item.lbl));
+                    } else {
+                         this.addContextItemUI('', 'Pre-existing legacy context (Will be replaced upon save)');
+                    }
+                } else {
+                    document.getElementById('q-title').value = '';
+                    document.getElementById('q-sentence').value = 'The {1} is {2} than the {3}.';
+                    document.getElementById('q-options').value = 'lighter, heavier, watermelon, grapes';
+                    this.addContextItemUI();
+                }
+
+                this.updateAnswerMapping();
+                
+                const modal = document.getElementById('question-form-modal');
+                modal.classList.remove('hide');
+                // Scroll modal to top on open
+                modal.querySelector('.overflow-y-auto').scrollTop = 0;
+            },
+
+            closeQuestionForm: function() {
+                document.getElementById('question-form-modal').classList.add('hide');
+            },
+
+            addContextItemUI: function(img = '', lbl = '') {
+                const container = document.getElementById('context-items-list');
+                const div = document.createElement('div');
+                div.className = 'context-item flex flex-col sm:flex-row gap-3 items-start bg-white p-4 rounded-xl border border-gray-200 mb-3 shadow-sm';
+                div.innerHTML = `
+                    <div class="flex-1 w-full space-y-3">
+                        <input type="text" class="ci-img w-full border border-gray-300 rounded-lg p-2 focus:border-blue-500 focus:ring-0 outline-none" placeholder="Image URL (e.g., https://...)" value="${img}">
+                        <textarea class="ci-lbl w-full border border-gray-300 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-0 outline-none" placeholder="Text Label (Use Enter for new lines)" rows="2">${lbl}</textarea>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="w-full sm:w-auto bg-red-50 text-red-600 font-bold px-4 py-2 rounded-lg hover:bg-red-100 transition border border-red-200">Remove</button>
+                `;
+                container.appendChild(div);
+            },
+
+            updateAnswerMapping: function() {
+                const sentence = document.getElementById('q-sentence').value;
+                const optionsStr = document.getElementById('q-options').value;
+                const options = optionsStr.split(',').map(o => o.trim()).filter(o => o !== '');
+
+                const matches = sentence.match(/\{\d+\}/g) || [];
+                const uniqueBlanks = [...new Set(matches)];
+
+                const container = document.getElementById('q-answer-mapping');
+                
+                const currentSelects = container.querySelectorAll('select');
+                currentSelects.forEach(sel => {
+                    const id = sel.id.replace('map-', '');
+                    this.currentAnswerMapTemp[id] = sel.value;
+                });
+
+                container.innerHTML = '';
+                
+                if(uniqueBlanks.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-500 italic">No {blanks} detected in the sentence structure.</p>';
+                    return;
+                }
+
+                uniqueBlanks.forEach(blank => {
+                    const blankId = blank.replace('{', '').replace('}', '');
+                    const div = document.createElement('div');
+                    div.className = 'flex flex-col sm:flex-row sm:items-center gap-2 bg-white p-3 rounded-lg border border-blue-50 shadow-sm';
+                    
+                    let optionsHtml = `<option value="">-- Select correct option --</option>`;
+                    options.forEach(o => {
+                        optionsHtml += `<option value="${o}">${o}</option>`;
+                    });
+
+                    div.innerHTML = `
+                        <label class="font-extrabold text-blue-900 w-24">Blank ${blankId}:</label>
+                        <select id="map-${blankId}" class="border border-gray-300 rounded-lg p-2 flex-1 bg-white outline-none focus:border-blue-500" onchange="app.saveMappingState('${blankId}', this.value)">
+                            ${optionsHtml}
+                        </select>
+                    `;
+                    container.appendChild(div);
+                    
+                    if(this.currentAnswerMapTemp[blankId]) {
+                        const sel = div.querySelector('select');
+                        if(options.includes(this.currentAnswerMapTemp[blankId])) {
+                            sel.value = this.currentAnswerMapTemp[blankId];
+                        }
+                    }
+                });
+            },
+
+            saveMappingState: function(blankId, val) {
+                this.currentAnswerMapTemp[blankId] = val;
+            },
+
+            saveQuestionData: function() {
+                const title = document.getElementById('q-title').value.trim();
+                const sentenceRaw = document.getElementById('q-sentence').value.trim();
+                const optionsRaw = document.getElementById('q-options').value;
+
+                if(!title || !sentenceRaw) {
+                    this.showCustomMessage("Title and Sentence Structure cannot be empty.");
+                    return;
+                }
+
+                const contextItems = document.querySelectorAll('.context-item');
+                let contextData = [];
+                let html = '';
+                
+                contextItems.forEach(item => {
+                    const img = item.querySelector('.ci-img').value.trim();
+                    const lbl = item.querySelector('.ci-lbl').value.trim();
+                    if (img || lbl) {
+                        contextData.push({ img, lbl });
+                        const formattedLbl = lbl.replace(/\n/g, '<br>');
+                        html += `
+                            <div class="flex flex-col items-center">
+                                <img src="${img || 'https://placehold.co/120x120/e2e8f0/64748b?text=No+Image'}" onerror="this.src='https://placehold.co/120x120/e2e8f0/64748b?text=Error'" class="rounded-xl shadow-md mb-2 border-4 border-gray-200 w-24 h-24 sm:w-32 sm:h-32 object-cover bg-white">
+                                <div class="font-bold text-gray-700 mt-1 text-center whitespace-pre-line">${formattedLbl}</div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                let contextHtml = contextData.length > 0 
+                    ? `<div class="flex justify-center flex-wrap gap-6 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner">${html}</div>`
+                    : '';
+
+                let parts = sentenceRaw.split(/(\{\d+\})/);
+                let sentenceStructure = parts.map(p => p.trim()).filter(p => p !== '');
+
+                let options = optionsRaw.split(',').map(o => o.trim()).filter(o => o !== '');
+                if (options.length === 0) {
+                     this.showCustomMessage("Please provide at least one option in the Word Bank.");
+                     return;
+                }
+
+                let correctAnswers = {};
+                const matches = sentenceRaw.match(/\{\d+\}/g) || [];
+                const uniqueBlanks = [...new Set(matches)];
+                let missingAnswer = false;
+
+                uniqueBlanks.forEach(blank => {
+                    const blankId = blank.replace('{', '').replace('}', '');
+                    const val = this.currentAnswerMapTemp[blankId];
+                    if(!val) missingAnswer = true;
+                    correctAnswers[blankId] = val;
+                });
+
+                if(missingAnswer && uniqueBlanks.length > 0) {
+                    this.showCustomMessage("Please map all blanks to a correct answer.");
+                    return;
+                }
+
+                const newQuestion = {
+                    title,
+                    contextHtml,
+                    contextData, 
+                    sentenceStructure,
+                    options,
+                    correctAnswers
+                };
+
+                if(this.editingQuestionIndex >= 0) {
+                    if(contextData.length === 0 && this.questions[this.editingQuestionIndex].contextHtml) {
+                         newQuestion.contextHtml = this.questions[this.editingQuestionIndex].contextHtml;
+                    }
+                    this.questions[this.editingQuestionIndex] = newQuestion;
+                } else {
+                    this.questions.push(newQuestion);
+                }
+
+                this.closeQuestionForm();
+                this.renderQuestionList();
+            }
+        };
+
+        // Initialize application
+        window.onload = () => {
+            app.init();
+        };
+
+    </script>
+</body>
+</html>
